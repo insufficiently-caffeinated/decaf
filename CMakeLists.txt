@@ -12,7 +12,7 @@ find_package(Z3 REQUIRED)
 enable_testing()
 
 file(
-  sources GLOB_RECURSE
+  GLOB_RECURSE sources
   src/*.cpp
   src/*.hpp
   src/*.h
@@ -20,7 +20,7 @@ file(
 )
 
 file(
-  tests GLOB_RECURSE
+  GLOB_RECURSE tests
   tests/*.cpp
   tests/*.h
   tests/*.hpp
@@ -36,5 +36,8 @@ target_link_libraries(decaf PUBLIC LLVMCore z3::libz3)
 
 target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(decaf-tests PRIVATE decaf)
+target_link_libraries(decaf-tests PRIVATE GTest::GTest)
+add_test(NAME decaf-tests COMMAND decaf-tests)
 
 target_link_libraries(decaf-bin PRIVATE decaf)
+set_target_properties(decaf-bin PROPERTIES OUTPUT_NAME decaf)
