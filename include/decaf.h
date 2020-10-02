@@ -21,11 +21,21 @@ namespace decaf {
   class Context {
   public:
     std::vector<StackFrame> stack;
+    z3::solver solver;
 
     Context fork() const {
       assert("not implemented");
       std::exit(EXIT_FAILURE);
     }
+  };
+
+  class Executor {
+  private:
+    std::vector<Context> contexts;
+
+  public:
+    void add_context(Context&& ctx) {}
+    void add_failure(const z3::model& model) {}
   };
 
   enum class ExecutionResult {
@@ -37,6 +47,7 @@ namespace decaf {
   class Interpreter : public llvm::InstVisitor<Interpreter, ExecutionResult> {
   private:
     Context* ctx; // Non-owning context reference
+    Executor* exec;
 
   public:
     // Add some more parameters here
