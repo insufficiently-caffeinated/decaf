@@ -32,6 +32,7 @@ add_executable(decaf-bin main.cpp)
 
 target_include_directories(decaf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(decaf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(decaf PUBLIC "${Z3_CXX_INCLUDE_DIRS}")
 target_link_libraries(decaf PUBLIC LLVMCore z3::libz3)
 
 target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
