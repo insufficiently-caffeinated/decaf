@@ -7,6 +7,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include "macros.h"
+
 namespace decaf {
   class StackFrame {
   public:
@@ -40,8 +42,7 @@ namespace decaf {
 
   enum class ExecutionResult {
     Continue,
-    Stop,
-    Unimplemented
+    Stop
   };
 
   class Interpreter : public llvm::InstVisitor<Interpreter, ExecutionResult> {
@@ -54,22 +55,21 @@ namespace decaf {
     Interpreter();
 
     ExecutionResult visitInstruction(llvm::Instruction& I) {
-      assert("Instruction not implemented");
-      return ExecutionResult::Unimplemented;
+      DECAF_UNIMPLEMENTED();
     }
 
     // Replace this with implementation in cpp file as we go
-    ExecutionResult visitAdd(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitSub(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitMul(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitUDiv(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitSDiv(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitURem(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitSRem(llvm::BinaryOperator& op) { return ExecutionResult::Unimplemented; }
+    ExecutionResult visitAdd(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitSub(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitMul(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitUDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitSDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitSRem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
 
-    ExecutionResult visitPHINode(llvm::PHINode& node) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitBranchInst(llvm::BranchInst& inst) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitReturnInst(llvm::ReturnInst& inst) { return ExecutionResult::Unimplemented; }
-    ExecutionResult visitCallInst(llvm::CallInst& inst) { return ExecutionResult::Unimplemented; }
+    ExecutionResult visitPHINode(llvm::PHINode& node) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitBranchInst(llvm::BranchInst& inst) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitReturnInst(llvm::ReturnInst& inst) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitCallInst(llvm::CallInst& inst) { DECAF_UNIMPLEMENTED(); }
   };
 }

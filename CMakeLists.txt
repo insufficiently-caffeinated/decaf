@@ -11,6 +11,8 @@ find_package(Z3 REQUIRED)
 
 enable_testing()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 file(
   GLOB_RECURSE sources
   src/*.cpp
