@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 
 project(decaf)
 
-# C++17 has a bunch of nice stuff, seems like a good level to target.
-set(CXX_STANDARD_REQUIRED 17)
-
 find_package(LLVM 10.0 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Z3 REQUIRED)
@@ -12,6 +9,27 @@ find_package(Z3 REQUIRED)
 enable_testing()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+# C++17 has a bunch of nice stuff, seems like a good level to target.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+
+# Compiler-specific warning options
+# Add more here as we find ones we want enabled.
+if (MSVC)
+  # This disables all warnings in headers included with angle brackets
+  #
+  # Since these should always be external dependencies in which we don't
+  # care about warnings anyway this is a good thing
+  add_compile_options(
+    /experimental:external
+    /external:anglebrackets
+    /external:W0
+  )
+
+  # Enable more detailed warnings (but not all of them).
+  add_compile_options(/W4)
+endif()
 
 file(
   GLOB_RECURSE sources
