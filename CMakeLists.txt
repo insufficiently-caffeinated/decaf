@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(decaf)
+project(decaf LANGUAGES C CXX)
 
 find_package(LLVM 10.0 REQUIRED)
 find_package(GTest REQUIRED)
