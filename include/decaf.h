@@ -17,7 +17,7 @@ namespace decaf {
     llvm::Function* function;
     llvm::BasicBlock* current_block;
     llvm::BasicBlock* prev_block;
-    // Need a current instruction pointer (maybe block iterator?)
+    llvm::BasicBlock::iterator current;
   };
 
   class Context {
@@ -26,9 +26,10 @@ namespace decaf {
     z3::solver solver;
 
     Context fork() const {
-      assert("not implemented");
-      std::exit(EXIT_FAILURE);
+      DECAF_UNIMPLEMENTED();
     }
+
+    StackFrame& stack_top();
   };
 
   class Executor {
@@ -36,7 +37,12 @@ namespace decaf {
     std::vector<Context> contexts;
 
   public:
+    // The current context has forked and the fork needs to be added
+    // to the queue.
     void add_context(Context&& ctx) {}
+
+    // The current context has encountered a failure that needs to be
+    // recorded.
     void add_failure(const z3::model& model) {}
   };
 
@@ -47,14 +53,29 @@ namespace decaf {
 
   class Interpreter : public llvm::InstVisitor<Interpreter, ExecutionResult> {
   private:
-    Context* ctx; // Non-owning context reference
-    Executor* exec;
+    Context* ctx;
+    Executor* queue;
 
   public:
     // Add some more parameters here
-    Interpreter();
+    Interpreter(
+      Context* ctx,
+      Executor* queue
+    );
 
-    ExecutionResult visitInstruction(llvm::Instruction& I) {
+    /**
+     * Execute this interpreter's context until it finishes.
+     * 
+     * Contexts from forks will be placed into the execution queue.
+     * Failures resulting from this context will also be added to
+     * the execution queue.
+     */
+    void execute();
+
+    // Marks an unimplemented instruction.
+    //
+    // TODO: Better error message?
+    ExecutionResult visitInstruction(llvm::Instruction&) {
       DECAF_UNIMPLEMENTED();
     }
 
