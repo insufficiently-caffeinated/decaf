@@ -18,12 +18,16 @@ namespace decaf {
     llvm::BasicBlock* current_block;
     llvm::BasicBlock* prev_block;
     llvm::BasicBlock::iterator current;
+
+    StackFrame(llvm::Function* function);
   };
 
   class Context {
   public:
     std::vector<StackFrame> stack;
     z3::solver solver;
+
+    Context(z3::context& z3, llvm::Function* function);
 
     Context fork() const {
       DECAF_UNIMPLEMENTED();
@@ -61,13 +65,11 @@ namespace decaf {
   private:
     Context* ctx;
     Executor* queue;
+    z3::context* z3;
 
   public:
     // Add some more parameters here
-    Interpreter(
-      Context* ctx,
-      Executor* queue
-    );
+    Interpreter(Context* ctx, Executor* queue, z3::context* z3);
 
     /**
      * Execute this interpreter's context until it finishes.
@@ -99,4 +101,27 @@ namespace decaf {
     ExecutionResult visitReturnInst(llvm::ReturnInst& inst) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitCallInst(llvm::CallInst& inst) { DECAF_UNIMPLEMENTED(); }
   };
+
+  /**
+   * Get the Z3 sort corresponding to the provided LLVM type.
+   *
+   * Only works for supported scalar values at the moment
+   * (i.e. only integers).
+   *
+   * Invalid types will result in an assertion.
+   */
+  z3::sort sort_for_type(z3::context& ctx, llvm::Type* type);
+
+  /**
+   * Executes the given function symbolically.
+   *
+   * Currently this works by making all the function arguments symbolic.
+   * Assertion failures during symbolic execution will result in the
+   * model being printed to stdout.
+   *
+   * Note: This is probably good enough for the prototype but we should
+   *       definitely refine the interface as we figure out the best API
+   *       for this.
+   */
+  void execute_symbolic(llvm::Function* function);
 }
