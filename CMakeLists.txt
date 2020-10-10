@@ -29,6 +29,10 @@ if (MSVC)
 
   # Enable more detailed warnings (but not all of them).
   add_compile_options(/W4)
+
+  # Some code within LLVM triggers this. It's not something we can fix so
+  # better to silence the warning than have it drown everything out.
+  add_compile_definitions(_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
 endif()
 
 file(
