@@ -6,11 +6,11 @@ FROM ubuntu:latest
 # faster)
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt -y install \
-    llvm-dev \
+    llvm-10-dev \
     libz-dev \
     build-essential \
-    gcc \
-    g++ \
+    gcc-9 \
+    g++-9 \
     git \
     make \
     cmake \
