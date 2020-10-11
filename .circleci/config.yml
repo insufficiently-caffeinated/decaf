@@ -4,6 +4,9 @@ jobs:
   build:
     docker:
       - image: insufficientlycaffeinated/bob:latest
+        auth:
+            username: $DOCKERHUB_USER
+            password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - run: mkdir build && cd build && cmake .. && make
