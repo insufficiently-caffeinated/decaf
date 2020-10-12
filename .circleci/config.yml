@@ -1,0 +1,13 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: insufficientlycaffeinated/bob:latest
+        auth:
+            username: $DOCKERHUB_USER
+            password: $DOCKERHUB_PASSWORD
+    steps:
+      - checkout
+      - run: mkdir build && cd build && cmake .. && make
+      - run: ctest . --output-on-failure
