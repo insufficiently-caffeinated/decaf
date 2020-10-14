@@ -64,5 +64,6 @@ target_link_libraries(decaf-tests PRIVATE decaf)
 target_link_libraries(decaf-tests PRIVATE GTest::GTest)
 add_test(NAME decaf-tests COMMAND decaf-tests)
 
-target_link_libraries(decaf-bin PRIVATE decaf)
 set_target_properties(decaf-bin PROPERTIES OUTPUT_NAME decaf)
+target_link_libraries(decaf-bin PRIVATE decaf)
+target_link_libraries(decaf-bin PRIVATE LLVMIRReader)
