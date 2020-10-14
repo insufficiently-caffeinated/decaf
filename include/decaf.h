@@ -20,6 +20,9 @@ namespace decaf {
     llvm::BasicBlock::iterator current;
 
     StackFrame(llvm::Function* function);
+    
+    void insert(llvm::Value* value, const z3::expr& expr);
+    z3::expr lookup(llvm::Value* value, z3::context& ctx) const;
   };
 
   class Context {
@@ -88,7 +91,7 @@ namespace decaf {
     }
 
     // Replace this with implementation in cpp file as we go
-    ExecutionResult visitAdd(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitAdd(llvm::BinaryOperator& op);
     ExecutionResult visitSub(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitMul(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitUDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
@@ -124,4 +127,5 @@ namespace decaf {
    *       for this.
    */
   void execute_symbolic(llvm::Function* function);
+  z3::expr evaluate_constant(z3::context& ctx, llvm::Constant* constant);
 }

@@ -1,6 +1,7 @@
 
 #include "decaf.h"
 
+#include <llvm/ADT/SmallString.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -44,6 +45,19 @@ namespace decaf {
     prev_block(nullptr),
     current(current_block->begin())
   {}
+  
+  void StackFrame::insert(llvm::Value* value, const z3::expr& expr) {
+    variables.insert({ value, expr });
+  }
+
+  z3::expr StackFrame::lookup(llvm::Value* value, z3::context& ctx) const {
+    if (auto* constant = llvm::dyn_cast_or_null<llvm::Constant>(value))
+      return evaluate_constant(ctx, constant);
+    
+    auto it = variables.find(value);
+    DECAF_ASSERT(it != variables.end(), "Tried to access unknown variable");
+    return it->second;
+  }
 
   /************************************************
    * Context                                      *
@@ -128,5 +142,44 @@ namespace decaf {
 
       interp.execute();
     }
+  }
+  
+  ExecutionResult Interpreter::visitAdd(llvm::BinaryOperator& op) {
+    StackFrame& frame = ctx->stack_top();
+
+    auto lhs = frame.lookup(op.getOperand(0), *z3);
+    auto rhs = frame.lookup(op.getOperand(1), *z3);
+
+    frame.insert(&op, lhs + rhs);
+
+    return ExecutionResult::Continue;
+  }
+
+  z3::expr evaluate_constant(z3::context& ctx, llvm::Constant* constant) {
+    auto type = constant->getType();
+
+    if (auto* intconst = llvm::dyn_cast<llvm::ConstantInt>(constant)) {
+      const llvm::APInt& value = intconst->getValue();
+
+      if (value.getBitWidth() <= 64) {
+        return ctx.bv_val(value.getLimitedValue(), value.getBitWidth());
+      } 
+
+      // This isn't particularly efficient. Unfortunately, when it comes
+      // to integers larger than uint64_t there's no efficient way to get
+      // them into Z3. The options are either
+      //  - Convert to base-10 string and use that
+      //  - Put every single bit into a separate boolean then load that
+      // I've opted to go the string route since it's easier here. Maybe
+      // in the future we can get an API for doing this more efficiently
+      // added to Z3.
+      llvm::SmallString<64> str;
+      value.toStringUnsigned(str, 10);
+
+      return ctx.bv_val(str.c_str(), value.getBitWidth());
+    }
+
+    // We only implement integers at the moment
+    DECAF_UNIMPLEMENTED();
   }
 }
