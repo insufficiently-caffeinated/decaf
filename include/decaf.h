@@ -21,7 +21,25 @@ namespace decaf {
 
     StackFrame(llvm::Function* function);
     
+    /**
+     * Insert a new value into the current stack frame. If that value
+     * is already in the current stack frame then it overwrites it.
+     */
     void insert(llvm::Value* value, const z3::expr& expr);
+    /**
+     * Lookup a value within the current stack frame.
+     * 
+     * There are two main cases here:
+     * 1. `value` is an existing variable
+     * 2. `value` is a constant
+     * 
+     * In the first case we just look up the variable the `variables` map
+     * and then return it. In the second case we build a Z3 expression
+     * that represents the constant and return that.
+     * 
+     * This method should be preferred over directly interacting with
+     * `variables` as it correctly handles constants.
+     */
     z3::expr lookup(llvm::Value* value, z3::context& ctx) const;
   };
 
@@ -127,5 +145,12 @@ namespace decaf {
    *       for this.
    */
   void execute_symbolic(llvm::Function* function);
+
+  /**
+   * Create a Z3 expression with the same value as the given constant.
+   * 
+   * Currently only supports integers and will abort on any other LLVM
+   * type.
+   */
   z3::expr evaluate_constant(z3::context& ctx, llvm::Constant* constant);
 }

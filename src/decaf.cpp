@@ -47,7 +47,7 @@ namespace decaf {
   {}
   
   void StackFrame::insert(llvm::Value* value, const z3::expr& expr) {
-    variables.insert({ value, expr });
+    variables.insert_or_assign(value, expr);
   }
 
   z3::expr StackFrame::lookup(llvm::Value* value, z3::context& ctx) const {
