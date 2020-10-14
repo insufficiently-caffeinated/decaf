@@ -54,6 +54,13 @@ namespace decaf {
       DECAF_UNIMPLEMENTED();
     }
 
+    /**
+     * Get the top frame of the stack.
+     * 
+     * This should be used instead of directly manipulating the stack
+     * vector so that it continues to work when more advanced data
+     * structures are implemented. 
+     */
     StackFrame& stack_top();
   };
 

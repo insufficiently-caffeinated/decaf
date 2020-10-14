@@ -78,6 +78,10 @@ namespace decaf {
     }
   }
 
+  StackFrame& Context::stack_top() {
+    DECAF_ASSERT(!stack.empty());
+    return stack.back();
+  }
 
   /************************************************
    * Interpreter                                  *
@@ -156,8 +160,6 @@ namespace decaf {
   }
 
   z3::expr evaluate_constant(z3::context& ctx, llvm::Constant* constant) {
-    auto type = constant->getType();
-
     if (auto* intconst = llvm::dyn_cast<llvm::ConstantInt>(constant)) {
       const llvm::APInt& value = intconst->getValue();
 
