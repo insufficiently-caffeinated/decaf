@@ -103,6 +103,33 @@ TEST(opcodes, basic_add_test) {
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
 
+TEST(opcodes, sub_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  Context ctx{z3, func.get()};
+
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 7));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -5));
+  
+  Interpreter interp{&ctx, nullptr, &z3};
+  auto& bb = func->getEntryBlock();
+
+  auto sub1 = llvm::BinaryOperator::CreateSub(val1, val2, "sub1", &bb);
+  auto sub2 = llvm::BinaryOperator::CreateSub(sub1, val3, "sub2", &bb);
+
+  interp.visitSub(*sub1);
+  interp.visitSub(*sub2);
+
+  auto expr = ctx.stack_top().lookup(sub2, z3);
+
+  ctx.solver.add(expr == 7 - 9 + 5);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
 TEST(opcodes, 1bit_add_test) {
   LLVMContext llvm;
   z3::context z3 = default_context();
@@ -137,4 +164,29 @@ TEST(opcodes, 1bit_add_test) {
   EXPECT_EQ(ctx.check(expr0 == 1), z3::sat);
   // 1 + 1 == 0 (mod 2)
   EXPECT_EQ(ctx.check(expr1 == 0), z3::sat);
+}
+
+TEST(opcodes, basic_mul_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 7));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 5));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto& bb = func->getEntryBlock();
+  auto mul1 = llvm::BinaryOperator::CreateMul(val1, val2, "mul1", &bb);
+  auto mul2 = llvm::BinaryOperator::CreateMul(mul1, val3, "mul2", &bb);
+
+  interp.visitMul(*mul1);
+  interp.visitMul(*mul2);
+
+  auto expr = ctx.stack_top().lookup(mul2, z3);
+  ctx.solver.add(expr == 7 * 9 * 5);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
