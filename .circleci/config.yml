@@ -6,8 +6,7 @@ jobs:
       - checkout
       - run:
           command: |
-            apt update
-            && apt -y install \
+            apt update && apt -y install \
               llvm-10-dev \
               libz-dev \
               build-essential \
