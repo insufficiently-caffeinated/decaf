@@ -6,7 +6,6 @@ jobs:
       - checkout
       - run:
           command: |
-            DEBIAN_FRONTEND=noninteractive
             apt update
             apt -y install \
               llvm-10-dev \
@@ -21,5 +20,7 @@ jobs:
               python3-distutils \
               libfmt-dev \
               libboost-all-dev
+          environment:
+            DEBIAN_FRONTEND: noninteractive
       - run: mkdir build && cd build && cmake .. && make
       - run: cd build && ctest . --output-on-failure
