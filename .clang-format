@@ -1,0 +1,13 @@
+{
+  AccessModifierOffset: -2,
+  AllowShortBlocksOnASingleLine: true,
+  AllowShortFunctionsOnASingleLine: Empty,
+  AllowShortIfStatementsOnASingleLine: false,
+  BasedOnStyle: LLVM,
+  BreakBeforeBraces: Attach,
+  ColumnLimit: 100,
+  IndentCaseLabels: false,
+  IndentWidth: 2,
+  TabWidth: 2,
+  UseTab: Never
+}
