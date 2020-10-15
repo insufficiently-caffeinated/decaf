@@ -165,8 +165,8 @@ namespace decaf {
   ExecutionResult Interpreter::visitAdd(llvm::BinaryOperator& op) {
     StackFrame& frame = ctx->stack_top();
 
-    auto lhs = frame.lookup(op.getOperand(0), *z3);
-    auto rhs = frame.lookup(op.getOperand(1), *z3);
+    auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+    auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
     frame.insert(&op, lhs + rhs);
 
@@ -282,6 +282,17 @@ namespace decaf {
 
     if (sort.is_int() && sort.bv_size() == 1)
       return expr == 1;
+
+    return expr;
+  }
+
+  z3::expr normalize_to_int(const z3::expr& expr) {
+    auto sort = expr.get_sort();
+
+    if (sort.is_bool()) {
+      auto& ctx = expr.ctx();
+      return z3::ite(expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1));
+    }
 
     return expr;
   }
