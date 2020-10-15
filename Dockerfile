@@ -8,7 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 
 RUN apt update \
-    && apt -y install \
+    && apt -y --no-install-recommends install \
         llvm-10-dev \
         libz-dev \
         build-essential \
@@ -31,4 +31,5 @@ RUN git clone https://github.com/Z3Prover/z3.git && \
     cmake .. && \
     make -j$(nproc) && \
     make install && \
+    cd ../.. && \
     rm -rf z3
