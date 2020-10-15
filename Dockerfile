@@ -22,14 +22,3 @@ RUN apt update \
         libfmt-dev \
         libboost-all-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# This is all done in 1 run command so that we don't end up storing the
-# intermediate layers in the final dockerfile
-RUN git clone https://github.com/Z3Prover/z3.git && \
-    mkdir -p z3/build && \
-    cd z3/build && \
-    cmake .. && \
-    make -j$(nproc) && \
-    make install && \
-    cd ../.. && \
-    rm -rf z3

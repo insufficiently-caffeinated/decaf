@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.8)
 
 project(decaf LANGUAGES C CXX)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
 find_package(LLVM 10.0 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(Z3 REQUIRED)
+find_package(Boost REQUIRED)
 
 enable_testing()
 
@@ -56,8 +59,14 @@ add_executable(decaf-bin main.cpp)
 
 target_include_directories(decaf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_include_directories(decaf PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_include_directories(decaf PUBLIC "${Z3_CXX_INCLUDE_DIRS}")
-target_link_libraries(decaf PUBLIC LLVMCore z3::libz3)
+
+# Apparently these aren't implicitly set up for all systems.
+# Easier to just add them here.
+target_include_directories(decaf PUBLIC "${LLVM_INCLUDE_DIRS}")
+target_include_directories(decaf PUBLIC "${Z3_INCLUDE_DIRS}")
+target_include_directories(decaf PUBLIC "${FMT_INCLUDE_DIRS}")
+target_include_directories(decaf PUBLIC "${Boost_INCLUDE_DIRS}")
+target_link_libraries(decaf PUBLIC LLVMCore "${Z3_LIBRARIES}")
 
 target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(decaf-tests PRIVATE decaf)
