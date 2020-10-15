@@ -158,3 +158,46 @@ TEST(opcodes, basic_mul_test) {
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
 
+TEST(opcodes, basic_sdiv_dev) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 81));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto& bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
+
+  interp.visitSDiv(*div1);
+
+  auto expr = ctx.stack_top().lookup(div1, z3);
+  ctx.solver.add(expr == 81 / 9);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, basic_udiv_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 81));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -9));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto& bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateUDiv(val1, val2, "div1", &bb);
+
+  interp.visitUDiv(*div1);
+
+  auto expr = ctx.stack_top().lookup(div1, z3);
+  ctx.solver.add(expr == 81 / -9);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}

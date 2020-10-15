@@ -150,8 +150,8 @@ namespace decaf {
     ExecutionResult visitAdd(llvm::BinaryOperator& op);
     ExecutionResult visitSub(llvm::BinaryOperator& op);
     ExecutionResult visitMul(llvm::BinaryOperator& op);
-    ExecutionResult visitUDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
-    ExecutionResult visitSDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitUDiv(llvm::BinaryOperator& op);
+    ExecutionResult visitSDiv(llvm::BinaryOperator& op);
     ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitSRem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
 
@@ -216,4 +216,15 @@ namespace decaf {
    * for when we have one and need the other.
    */
   z3::expr normalize_to_int(const z3::expr& expr);
+  /**
+   * Normalize a Z3 expression to represent booleans as unsigned integers.
+   * Doesn't affect any other expression type.
+   * 
+   * Justification
+   * =============
+   * LLVM represents booleans using 1-bit integers and most of the time
+   * they're being used as booleans so we need some conversion methods
+   * for when we have one and need the other.
+   */
+  z3::expr normalize_to_uint(const z3::expr& expr);
 }
