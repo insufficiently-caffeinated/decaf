@@ -142,8 +142,8 @@ namespace decaf {
 
     // Replace this with implementation in cpp file as we go
     ExecutionResult visitAdd(llvm::BinaryOperator& op);
-    ExecutionResult visitSub(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
-    ExecutionResult visitMul(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitSub(llvm::BinaryOperator& op);
+    ExecutionResult visitMul(llvm::BinaryOperator& op);
     ExecutionResult visitUDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitSDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
