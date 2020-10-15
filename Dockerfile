@@ -8,7 +8,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 
 RUN apt update \
-    && apt -y install \
+    && apt -y --no-install-recommends install \
         llvm-10-dev \
         libz-dev \
         build-essential \
