@@ -134,7 +134,7 @@ TEST(opcodes, 1bit_add_test) {
   auto expr1 = frame.lookup(add1, z3);
 
   // 1 + 0 == 1 (mod 2)
-  EXPECT_EQ(ctx.check(expr0 == true), z3::sat);
+  EXPECT_EQ(ctx.check(expr0 == 1), z3::sat);
   // 1 + 1 == 0 (mod 2)
-  EXPECT_EQ(ctx.check(expr1 == false), z3::sat);
+  EXPECT_EQ(ctx.check(expr1 == 0), z3::sat);
 }
