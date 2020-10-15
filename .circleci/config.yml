@@ -1,8 +1,7 @@
 jobs:
   build:
-      docker:
-        - image: ubuntu:latest
-  build:
+    docker:
+      - image: ubuntu:latest
     steps:
       - checkout
       - run:
