@@ -62,6 +62,31 @@ namespace decaf {
      * structures are implemented. 
      */
     StackFrame& stack_top();
+
+    /**
+     * Check whether the current set of assertions + the given expression
+     * is satisfiable.
+     * 
+     * Does not modify the solver state. If this returns sat then you can
+     * get the solver model as a test case.
+     * 
+     * This will cause an assertion failure if expr is not either a boolean
+     * or a 1-bit integer. 1-bit integers will be implicitly converted to
+     * a boolean.
+     */
+    z3::check_result check(const z3::expr& expr);
+    /**
+     * Check whether the current set of assertions is satisifiable.
+     * 
+     * If this returns sat then you can extract a model by calling
+     * `solver.model()`.
+     */
+    z3::check_result check();
+
+    /**
+     * Add a new assertion to the solver.
+     */
+    void add(const z3::expr& assertion);
   };
 
   class Executor {
@@ -124,9 +149,9 @@ namespace decaf {
     ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitSRem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
 
-    ExecutionResult visitPHINode(llvm::PHINode& node) { DECAF_UNIMPLEMENTED(); }
-    ExecutionResult visitBranchInst(llvm::BranchInst& inst) { DECAF_UNIMPLEMENTED(); }
-    ExecutionResult visitReturnInst(llvm::ReturnInst& inst) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitPHINode(llvm::PHINode& node);
+    ExecutionResult visitBranchInst(llvm::BranchInst& inst);
+    ExecutionResult visitReturnInst(llvm::ReturnInst& inst);
     ExecutionResult visitCallInst(llvm::CallInst& inst) { DECAF_UNIMPLEMENTED(); }
   };
 
@@ -160,4 +185,16 @@ namespace decaf {
    * type.
    */
   z3::expr evaluate_constant(z3::context& ctx, llvm::Constant* constant);
+
+  /**
+   * Normalize a Z3 expression to represent 1-bit integers as booleans.
+   * Doesn't affect any other expression type.
+   * 
+   * Justification
+   * =============
+   * LLVM represents booleans using 1-bit integers and most of the time
+   * they're being used as booleans so it's easier to normalize them to
+   * booleans when needed.
+   */
+  z3::expr normalize_to_bool(const z3::expr& expr);
 }
