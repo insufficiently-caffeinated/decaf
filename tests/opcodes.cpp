@@ -102,3 +102,39 @@ TEST(opcodes, basic_add_test) {
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
+
+TEST(opcodes, 1bit_add_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+
+  // There's only two constant 1-bit integers
+  auto val0 = ConstantInt::get(IntegerType::getInt1Ty(llvm), APInt(1, 0));
+  auto val1 = ConstantInt::get(IntegerType::getInt1Ty(llvm), APInt(1, 1));
+
+  auto& bb = func->getEntryBlock();
+  // We'll never actually use this value, just need a non-constant value
+  // type that we can manually insert into the context.
+  auto dummy = llvm::BinaryOperator::CreateAdd(val0, val1, "dummy", &bb);
+  
+  auto add0 = llvm::BinaryOperator::CreateAdd(dummy, val0, "add0", &bb);
+  auto add1 = llvm::BinaryOperator::CreateAdd(dummy, val1, "add1", &bb);
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  ctx.stack_top().insert(dummy, z3.bool_val(true));
+
+  interp.visit(add0);
+  interp.visit(add1);
+
+  auto& frame = ctx.stack_top();
+  auto expr0 = frame.lookup(add0, z3);
+  auto expr1 = frame.lookup(add1, z3);
+
+  // 1 + 0 == 1 (mod 2)
+  EXPECT_EQ(ctx.check(expr0 == true), z3::sat);
+  // 1 + 1 == 0 (mod 2)
+  EXPECT_EQ(ctx.check(expr1 == false), z3::sat);
+}
