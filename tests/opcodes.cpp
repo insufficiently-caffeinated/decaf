@@ -1,8 +1,8 @@
 
 #include <gtest/gtest.h>
 
-#include "decaf.h"
 #include "common.h"
+#include "decaf.h"
 
 #include <llvm/IR/Instructions.h>
 
@@ -10,10 +10,10 @@
 
 using namespace decaf;
 
-using llvm::ConstantInt;
-using llvm::LLVMContext;
-using llvm::IntegerType;
 using llvm::APInt;
+using llvm::ConstantInt;
+using llvm::IntegerType;
+using llvm::LLVMContext;
 
 /**
  * Tests that creating constant integers with bitwidth > 64 works
@@ -24,7 +24,7 @@ TEST(opcodes, large_constant_integer) {
   z3::context z3 = default_context();
 
   unsigned bitwidth = 20000;
-  const char* string = "99999999999999999999999999999999999999999999999999991";
+  const char *string = "99999999999999999999999999999999999999999999999999991";
   auto value = ConstantInt::get(IntegerType::get(llvm, bitwidth), APInt(bitwidth, string, 10));
 
   auto evaluated = decaf::evaluate_constant(z3, value);
@@ -38,7 +38,7 @@ TEST(opcodes, large_constant_integer) {
 
 /**
  * Test that 7 + 9 + 5 == 21.
- * 
+ *
  * This tests that
  * 1. Creating integer constants works properly.
  * 2. Addition instructions with only constant operands work properly.
@@ -57,7 +57,7 @@ TEST(opcodes, basic_add_test) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto add1 = llvm::BinaryOperator::CreateAdd(val1, val2, "add1", &bb);
   auto add2 = llvm::BinaryOperator::CreateAdd(add1, val3, "add2", &bb);
 
@@ -80,9 +80,9 @@ TEST(opcodes, basic_sub_test) {
   auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 7));
   auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
   auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, (uint64_t)(-5)));
-  
+
   Interpreter interp{&ctx, nullptr, &z3};
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
 
   auto sub1 = llvm::BinaryOperator::CreateSub(val1, val2, "sub1", &bb);
   auto sub2 = llvm::BinaryOperator::CreateSub(sub1, val3, "sub2", &bb);
@@ -107,11 +107,11 @@ TEST(opcodes, 1bit_add_test) {
   auto val0 = ConstantInt::get(IntegerType::getInt1Ty(llvm), APInt(1, 0));
   auto val1 = ConstantInt::get(IntegerType::getInt1Ty(llvm), APInt(1, 1));
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   // We'll never actually use this value, just need a non-constant value
   // type that we can manually insert into the context.
   auto dummy = llvm::BinaryOperator::CreateAdd(val0, val1, "dummy", &bb);
-  
+
   auto add0 = llvm::BinaryOperator::CreateAdd(dummy, val0, "add0", &bb);
   auto add1 = llvm::BinaryOperator::CreateAdd(dummy, val1, "add1", &bb);
 
@@ -123,7 +123,7 @@ TEST(opcodes, 1bit_add_test) {
   interp.visit(add0);
   interp.visit(add1);
 
-  auto& frame = ctx.stack_top();
+  auto &frame = ctx.stack_top();
   auto expr0 = frame.lookup(add0, z3);
   auto expr1 = frame.lookup(add1, z3);
 
@@ -145,7 +145,7 @@ TEST(opcodes, basic_mul_test) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto mul1 = llvm::BinaryOperator::CreateMul(val1, val2, "mul1", &bb);
   auto mul2 = llvm::BinaryOperator::CreateMul(mul1, val3, "mul2", &bb);
 
@@ -169,7 +169,7 @@ TEST(opcodes, basic_sdiv_dev) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
 
   interp.visitSDiv(*div1);
@@ -191,7 +191,7 @@ TEST(opcodes, basic_udiv_test) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto div1 = llvm::BinaryOperator::CreateUDiv(val1, val2, "div1", &bb);
 
   interp.visitUDiv(*div1);
@@ -214,7 +214,7 @@ TEST(opcodes, udiv_test_div_by_zero) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto div1 = llvm::BinaryOperator::CreateUDiv(val1, val2, "div1", &bb);
 
   interp.visitUDiv(*div1);
@@ -244,7 +244,7 @@ TEST(opcodes, sdiv_test_div_by_zero) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
 
   interp.visitSDiv(*div1);
@@ -263,7 +263,7 @@ TEST(opcodes, sdiv_test_div_by_zero) {
 }
 
 TEST(opcodes, sdiv_test_overflow) {
-   LLVMContext llvm;
+  LLVMContext llvm;
   z3::context z3 = default_context();
 
   auto func = empty_function(llvm);
@@ -273,7 +273,7 @@ TEST(opcodes, sdiv_test_overflow) {
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
 
-  auto& bb = func->getEntryBlock();
+  auto &bb = func->getEntryBlock();
   auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
 
   interp.visitSDiv(*div1);
