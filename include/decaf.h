@@ -48,11 +48,17 @@ namespace decaf {
     std::vector<StackFrame> stack;
     z3::solver solver;
 
+  private:
+    Context(const Context& ctx, z3::solver&& solver);
+
+  public:
     Context(z3::context& z3, llvm::Function* function);
 
-    Context fork() const {
-      DECAF_UNIMPLEMENTED();
-    }
+    /**
+     * Create a new context that is independant from this
+     * one but has the same state.
+     */
+    Context fork() const;
 
     /**
      * Get the top frame of the stack.
