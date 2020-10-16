@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "decaf.h"
+#include "common.h"
 
 #include <llvm/IR/Instructions.h>
 
@@ -13,40 +14,6 @@ using llvm::ConstantInt;
 using llvm::LLVMContext;
 using llvm::IntegerType;
 using llvm::APInt;
-
-// Create a z3 context with the required configuration
-//
-// This should be kept roughly in sync with the context creation
-// within decaf::execute_symbolic.
-static z3::context default_context() {
-  z3::config cfg;
-
-  // We want Z3 to generate models
-  cfg.set("model", true);
-  // Automatically select and configure the solver
-  cfg.set("auto_config", true);
-
-  return z3::context{cfg};
-}
-
-/**
- * Creates a function with a single basic block.
- * 
- * When creating a few simple instructions you should insert them into
- * the provided basic block otherwise you'll get LLVM assertions when
- * attempting to run the tests.
- */
-std::unique_ptr<llvm::Function> empty_function(LLVMContext& llvm) {
-  auto function = llvm::Function::Create(
-    llvm::FunctionType::get(llvm::Type::getVoidTy(llvm), false),
-    llvm::GlobalValue::LinkageTypes::PrivateLinkage,
-    0 // addrspace
-  );
-
-  llvm::BasicBlock::Create(llvm, "entry", function);
-
-  return std::unique_ptr<llvm::Function>(function);
-}
 
 /**
  * Tests that creating constant integers with bitwidth > 64 works
@@ -103,7 +70,7 @@ TEST(opcodes, basic_add_test) {
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
 
-TEST(opcodes, sub_test) {
+TEST(opcodes, basic_sub_test) {
   LLVMContext llvm;
   z3::context z3 = default_context();
 
@@ -112,7 +79,7 @@ TEST(opcodes, sub_test) {
 
   auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 7));
   auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
-  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -5));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, (uint64_t)(-5)));
   
   Interpreter interp{&ctx, nullptr, &z3};
   auto& bb = func->getEntryBlock();
@@ -190,3 +157,4 @@ TEST(opcodes, basic_mul_test) {
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
+
