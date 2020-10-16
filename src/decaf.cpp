@@ -78,6 +78,11 @@ namespace decaf {
       argnum += 1;
     }
   }
+  Context::Context(const Context& ctx, z3::solver&& solver) :
+    Context(ctx)
+  {
+    solver = std::move(solver);
+  }
 
   StackFrame& Context::stack_top() {
     DECAF_ASSERT(!stack.empty());
@@ -95,6 +100,16 @@ namespace decaf {
 
   void Context::add(const z3::expr& assertion) {
     solver.add(assertion);
+  }
+
+  Context Context::fork() const {
+    z3::solver new_solver{solver.ctx()};
+
+    for (const auto& assertion : solver.assertions()) {
+      new_solver.add(assertion);
+    }
+    
+    return Context(*this, std::move(new_solver));
   }
 
   /************************************************
