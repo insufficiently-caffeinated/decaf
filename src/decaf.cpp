@@ -213,10 +213,13 @@ namespace decaf {
   ExecutionResult Interpreter::visitSDiv(llvm::BinaryOperator& op) {
     StackFrame& frame = ctx->stack_top();
 
-    DECAF_ASSERT(op.getOperand(1) != 0);
-
     auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
     auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+    if (ctx->check(rhs == 0) == z3::sat) {
+      queue->add_failure(ctx->solver.get_model());
+    }
+    ctx->add(rhs != 0);
 
     frame.insert(&op, lhs / rhs);
 
@@ -226,10 +229,13 @@ namespace decaf {
   ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator& op) {
     StackFrame& frame = ctx->stack_top();
 
-    DECAF_ASSERT(op.getOperand(1) != 0);
-
     auto lhs = normalize_to_uint(frame.lookup(op.getOperand(0), *z3));
     auto rhs = normalize_to_uint(frame.lookup(op.getOperand(1), *z3));
+
+    if (ctx->check(rhs == 0) == z3::sat) {
+      queue->add_failure(ctx->solver.get_model());
+    }
+    ctx->add(rhs != 0);
 
     frame.insert(&op, lhs / rhs);
 
