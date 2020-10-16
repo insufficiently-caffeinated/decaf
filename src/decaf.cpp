@@ -210,6 +210,53 @@ namespace decaf {
     return ExecutionResult::Continue;
   }
 
+  ExecutionResult Interpreter::visitICmpInst(llvm::ICmpInst& icmp) {
+    using llvm::ICmpInst;
+
+    StackFrame& frame = ctx->stack_top();
+
+    auto lhs = normalize_to_int(frame.lookup(icmp.getOperand(0), *z3));
+    auto rhs = normalize_to_int(frame.lookup(icmp.getOperand(1), *z3));
+
+    switch (icmp.getPredicate()) {
+    case ICmpInst::ICMP_EQ:
+      frame.insert(&icmp, lhs == rhs);
+      break;
+    case ICmpInst::ICMP_NE:
+      frame.insert(&icmp, lhs != rhs);
+      break;
+    case ICmpInst::ICMP_UGT:
+      frame.insert(&icmp, z3::ugt(lhs, rhs));
+      break;
+    case ICmpInst::ICMP_UGE:
+      frame.insert(&icmp, z3::uge(lhs, rhs));
+      break;
+    case ICmpInst::ICMP_ULT:
+      frame.insert(&icmp, z3::ult(lhs, rhs));
+      break;
+    case ICmpInst::ICMP_ULE:
+      frame.insert(&icmp, z3::ule(lhs, rhs));
+      break;
+    case ICmpInst::ICMP_SGT:
+      frame.insert(&icmp, lhs > rhs);
+      break;
+    case ICmpInst::ICMP_SGE:
+      frame.insert(&icmp, lhs >= rhs);
+      break;
+    case ICmpInst::ICMP_SLT:
+      frame.insert(&icmp, lhs < rhs);
+      break;
+    case ICmpInst::ICMP_SLE:
+      frame.insert(&icmp, lhs <= rhs);
+      break;
+    default:
+      DECAF_UNREACHABLE();
+    }
+  
+    return ExecutionResult::Continue;
+  }
+  
+
   ExecutionResult Interpreter::visitBranchInst(llvm::BranchInst& inst) {
     auto jump_to = [&](llvm::BasicBlock* target) {
       auto& frame = ctx->stack_top();

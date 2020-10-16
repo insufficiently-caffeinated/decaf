@@ -155,6 +155,8 @@ namespace decaf {
     ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitSRem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
 
+    ExecutionResult visitICmpInst(llvm::ICmpInst& icmp);
+
     ExecutionResult visitPHINode(llvm::PHINode& node);
     ExecutionResult visitBranchInst(llvm::BranchInst& inst);
     ExecutionResult visitReturnInst(llvm::ReturnInst& inst);
