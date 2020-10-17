@@ -53,6 +53,8 @@ file(
   tests/*.hpp
 )
 
+set(fmt_sources "${sources}" "${tests}")
+
 add_library(decaf STATIC ${sources})
 add_executable(decaf-tests ${tests})
 add_executable(decaf-bin main.cpp)
@@ -76,3 +78,9 @@ add_test(NAME decaf-tests COMMAND decaf-tests)
 set_target_properties(decaf-bin PROPERTIES OUTPUT_NAME decaf)
 target_link_libraries(decaf-bin PRIVATE decaf)
 target_link_libraries(decaf-bin PRIVATE LLVMIRReader)
+
+add_custom_target(format
+  COMMAND clang-format -i ${fmt_sources}
+  VERBATIM
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
