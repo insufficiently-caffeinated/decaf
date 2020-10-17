@@ -150,8 +150,8 @@ namespace decaf {
     ExecutionResult visitAdd(llvm::BinaryOperator& op);
     ExecutionResult visitSub(llvm::BinaryOperator& op);
     ExecutionResult visitMul(llvm::BinaryOperator& op);
-    ExecutionResult visitUDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
-    ExecutionResult visitSDiv(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
+    ExecutionResult visitUDiv(llvm::BinaryOperator& op);
+    ExecutionResult visitSDiv(llvm::BinaryOperator& op);
     ExecutionResult visitURem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
     ExecutionResult visitSRem(llvm::BinaryOperator& op) { DECAF_UNIMPLEMENTED(); }
 
