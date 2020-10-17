@@ -245,14 +245,14 @@ TEST(opcodes, sdiv_test_div_by_zero) {
   Interpreter interp{&ctx, nullptr, &z3};
 
   auto& bb = func->getEntryBlock();
-  auto div1 = llvm::BinaryOperator::CreateUDiv(val1, val2, "div1", &bb);
+  auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
 
   interp.visitSDiv(*div1);
 
   auto expr0 = ctx.stack_top().lookup(div1, z3);
   EXPECT_EQ(ctx.check(expr0 == 2), z3::sat);
 
-  auto div2 = llvm::BinaryOperator::CreateUDiv(div1, val3, "div2", &bb);
+  auto div2 = llvm::BinaryOperator::CreateSDiv(div1, val3, "div2", &bb);
 
   // For now there should be a print msg in cout that we tried to divide by 0.
   // TODO: Change this test once `Executor::add_failure` is updated.
@@ -260,4 +260,26 @@ TEST(opcodes, sdiv_test_div_by_zero) {
 
   auto expr1 = ctx.stack_top().lookup(div2, z3);
   EXPECT_EQ(ctx.check(expr1 == 0), z3::unsat);
+}
+
+TEST(opcodes, sdiv_test_overflow) {
+   LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt::getSignedMinValue(32));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -1));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto& bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateSDiv(val1, val2, "div1", &bb);
+
+  interp.visitSDiv(*div1);
+
+  // For now there should be a print msg in cout that we tried to divide by 0.
+  // TODO: Change this test once `Executor::add_failure` is updated.
+  auto expr0 = ctx.stack_top().lookup(div1, z3);
+  EXPECT_EQ(ctx.check(expr0 == 2), z3::unsat);
 }

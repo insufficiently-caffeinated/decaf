@@ -216,10 +216,11 @@ namespace decaf {
     auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
     auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
-    if (ctx->check(rhs == 0) == z3::sat) {
+    if (ctx->check(rhs == 0 || !z3::bvsdiv_no_overflow(lhs, rhs)) == z3::sat) {
       queue->add_failure(ctx->solver.get_model());
     }
     ctx->add(rhs != 0);
+    ctx->add(z3::bvsdiv_no_overflow(lhs, rhs));
 
     frame.insert(&op, lhs / rhs);
 
@@ -229,8 +230,8 @@ namespace decaf {
   ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator& op) {
     StackFrame& frame = ctx->stack_top();
 
-    auto lhs = normalize_to_uint(frame.lookup(op.getOperand(0), *z3));
-    auto rhs = normalize_to_uint(frame.lookup(op.getOperand(1), *z3));
+    auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+    auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
     if (ctx->check(rhs == 0) == z3::sat) {
       queue->add_failure(ctx->solver.get_model());
@@ -287,6 +288,7 @@ namespace decaf {
   
     return ExecutionResult::Continue;
   }
+
 
   ExecutionResult Interpreter::visitBranchInst(llvm::BranchInst& inst) {
     auto jump_to = [&](llvm::BasicBlock* target) {
@@ -407,17 +409,6 @@ namespace decaf {
     if (sort.is_bool()) {
       auto& ctx = expr.ctx();
       return z3::ite(expr, ctx.bv_val(1, 1), ctx.bv_val(0, 1));
-    }
-
-    return expr;
-  }
-
-  z3::expr normalize_to_uint(const z3::expr& expr) {
-    auto sort = expr.get_sort();
-
-    if (sort.is_bool()) {
-      auto& ctx = expr.ctx();
-      return z3::ite(expr, ctx.bv_val(1, 1u), ctx.bv_val(0, 1u));
     }
 
     return expr;
