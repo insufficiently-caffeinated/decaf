@@ -283,3 +283,77 @@ TEST(opcodes, sdiv_test_overflow) {
   auto expr0 = ctx.stack_top().lookup(div1, z3);
   EXPECT_EQ(ctx.check(expr0 == 2), z3::unsat);
 }
+
+TEST(opcodes, srem_base_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 82));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 3));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateSRem(val1, val2, "div1", &bb);
+  auto div2 = llvm::BinaryOperator::CreateSRem(val2, val3, "div2", &bb);
+
+  interp.visitSRem(*div1);
+  interp.visitSRem(*div2);
+
+  auto expr0 = ctx.stack_top().lookup(div1, z3);
+  auto expr1 = ctx.stack_top().lookup(div2, z3);
+
+  EXPECT_EQ(ctx.check(expr0 == 1), z3::sat);
+  EXPECT_EQ(ctx.check(expr1 == 0), z3::sat);
+}
+
+TEST(opcodes, urem_base_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 82));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 3));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateURem(val1, val2, "div1", &bb);
+  auto div2 = llvm::BinaryOperator::CreateURem(val2, val3, "div2", &bb);
+
+  interp.visitURem(*div1);
+  interp.visitURem(*div2);
+
+  auto expr0 = ctx.stack_top().lookup(div1, z3);
+  auto expr1 = ctx.stack_top().lookup(div2, z3);
+
+  EXPECT_EQ(ctx.check(expr0 == 1), z3::sat);
+  EXPECT_EQ(ctx.check(expr1 == 0), z3::sat);
+}
+
+TEST(opcodes, srem_test_overflow) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt::getSignedMinValue(32));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -1));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateSRem(val1, val2, "div1", &bb);
+
+  interp.visitSRem(*div1);
+
+  // For now there should be a print msg in cout that we tried to divide by 0.
+  // TODO: Change this test once `Executor::add_failure` is updated.
+  auto expr0 = ctx.stack_top().lookup(div1, z3);
+  EXPECT_EQ(ctx.check(expr0 == 2147483647), z3::unsat);
+}
