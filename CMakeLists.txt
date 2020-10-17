@@ -36,6 +36,16 @@ if (MSVC)
   # Some code within LLVM triggers this. It's not something we can fix so
   # better to silence the warning than have it drown everything out.
   add_compile_definitions(_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
+elseif(UNIX)
+  if (CMAKE_GENERATOR STREQUAL "Ninja")
+    # By default error messages are emitted without colour when compiling
+    # with Ninja. This turns on coloured diagnostics by default.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_compile_options(-fdiagnostics-color=always)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      add_compile_options(fcolor-diagnostics)
+    endif()
+  endif()
 endif()
 
 file(
