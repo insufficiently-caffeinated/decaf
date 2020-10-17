@@ -1,6 +1,9 @@
 
 #include "decaf.h"
 
+#include <boost/range/combine.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <fmt/format.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Support/raw_ostream.h>
@@ -90,6 +93,7 @@ z3::check_result Context::check() {
 }
 
 void Context::add(const z3::expr &assertion) {
+  DECAF_ASSERT(assertion.is_bool(), "assertions must be booleans");
   solver.add(assertion);
 }
 
@@ -352,6 +356,71 @@ ExecutionResult Interpreter::visitPHINode(llvm::PHINode &node) {
 
   auto value = frame.lookup(node.getIncomingValueForBlock(frame.prev_block), *z3);
   frame.insert(&node, value);
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitCallInst(llvm::CallInst &call) {
+  auto func = call.getCalledFunction();
+
+  if (func->isIntrinsic()) {
+    DECAF_ABORT(fmt::format("Intrinsic function '{}' not supported", func->getName().str()));
+  }
+
+  DECAF_ASSERT(!call.isIndirectCall(), "Indirect functions are not implemented yet");
+  DECAF_ASSERT(!func->empty(),
+               fmt::format("Unsupported external function '{}'", func->getName().str()));
+
+  StackFrame callee{func};
+  auto &frame = ctx->stack_top();
+
+  for (auto arg_pair :
+       boost::combine(boost::make_iterator_range(func->arg_begin(), func->arg_end()),
+                      boost::make_iterator_range(call.arg_begin(), call.arg_end()))) {
+    callee.insert(&boost::get<0>(arg_pair), frame.lookup(boost::get<1>(arg_pair).get(), *z3));
+  }
+
+  ctx->stack.push_back(std::move(callee));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitExternFunc(llvm::CallInst &call) {
+  auto func = call.getCalledFunction();
+  auto name = func->getName();
+
+  DECAF_ASSERT(func->empty(), "visitExternFunc called with non-external function");
+
+  if (name == "decaf_assert")
+    return visitAssert(call);
+  if (name == "decaf_assume")
+    return visitAssume(call);
+
+  DECAF_ABORT(fmt::format("external function '{}' not implemented", name.str()));
+}
+
+ExecutionResult Interpreter::visitAssume(llvm::CallInst &call) {
+  DECAF_ASSERT(call.getNumArgOperands() == 1);
+
+  auto &frame = ctx->stack_top();
+  ctx->add(normalize_to_bool(frame.lookup(call.getArgOperand(0), *z3)));
+
+  // Don't check whether adding the assumption causes this path to become
+  // dead since assumptions are rare, solver calls are expensive, and it'll
+  // get caught at the next conditional branch anyway.
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitAssert(llvm::CallInst &call) {
+  DECAF_ASSERT(call.getNumArgOperands() == 1);
+
+  auto &frame = ctx->stack_top();
+  auto assertion = normalize_to_bool(frame.lookup(call.getArgOperand(0), *z3));
+
+  if (ctx->check(!assertion) == z3::sat) {
+    queue->add_failure(ctx->solver.get_model());
+  }
+  ctx->add(assertion);
 
   return ExecutionResult::Continue;
 }

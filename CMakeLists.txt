@@ -78,7 +78,7 @@ target_include_directories(decaf PUBLIC "${LLVM_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${Z3_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${FMT_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${Boost_INCLUDE_DIRS}")
-target_link_libraries(decaf PUBLIC LLVMCore "${Z3_LIBRARIES}")
+target_link_libraries(decaf PUBLIC LLVMCore "${Z3_LIBRARIES}" fmt)
 
 target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(decaf-tests PRIVATE decaf)
