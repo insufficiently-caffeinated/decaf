@@ -45,6 +45,12 @@ StackFrame::StackFrame(llvm::Function *function)
     : function(function), current_block(&function->getEntryBlock()), prev_block(nullptr),
       current(current_block->begin()) {}
 
+void StackFrame::jump_to(llvm::BasicBlock *block) {
+  prev_block = current_block;
+  current_block = block;
+  current = block->begin();
+}
+
 void StackFrame::insert(llvm::Value *value, const z3::expr &expr) {
   variables.insert_or_assign(value, expr);
 }
@@ -74,9 +80,8 @@ Context::Context(z3::context &z3, llvm::Function *function) : solver(z3) {
     argnum += 1;
   }
 }
-Context::Context(const Context &ctx, z3::solver &&solver) : Context(ctx) {
-  solver = std::move(solver);
-}
+Context::Context(const Context &ctx, z3::solver &&solver)
+    : stack(ctx.stack), solver(std::move(solver)) {}
 
 StackFrame &Context::stack_top() {
   DECAF_ASSERT(!stack.empty());
@@ -131,43 +136,6 @@ void Interpreter::execute() {
 
     exec = visit(inst);
   } while (exec == ExecutionResult::Continue);
-}
-
-/************************************************
- * Free Functions                               *
- ************************************************/
-z3::sort sort_for_type(z3::context &ctx, llvm::Type *type) {
-  if (type->isIntegerTy()) {
-    return ctx.bv_sort(type->getIntegerBitWidth());
-  }
-
-  std::string message;
-  llvm::raw_string_ostream os{message};
-  os << "Unsupported LLVM type: ";
-  type->print(os);
-
-  DECAF_ABORT(message);
-}
-
-void execute_symbolic(llvm::Function *function) {
-  z3::config cfg;
-
-  // We want Z3 to generate models
-  cfg.set("model", true);
-  // Automatically select and configure the solver
-  cfg.set("auto_config", true);
-
-  z3::context z3{cfg};
-  Executor exec;
-
-  exec.add_context(Context(z3, function));
-
-  while (exec.has_next()) {
-    Context ctx = exec.next_context();
-    Interpreter interp{&ctx, &exec, &z3};
-
-    interp.execute();
-  }
 }
 
 ExecutionResult Interpreter::visitAdd(llvm::BinaryOperator &op) {
@@ -283,14 +251,8 @@ ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator &op) {
 }
 
 ExecutionResult Interpreter::visitBranchInst(llvm::BranchInst &inst) {
-  auto jump_to = [&](llvm::BasicBlock *target) {
-    auto &frame = ctx->stack_top();
-    frame.prev_block = frame.current_block;
-    frame.current_block = target;
-  };
-
   if (!inst.isConditional()) {
-    jump_to(inst.getSuccessor(0));
+    ctx->stack_top().jump_to(inst.getSuccessor(0));
     return ExecutionResult::Continue;
   }
 
@@ -312,13 +274,18 @@ ExecutionResult Interpreter::visitBranchInst(llvm::BranchInst &inst) {
     fork.add(cond);
     ctx->add(!cond);
 
+    fork.stack_top().jump_to(inst.getSuccessor(0));
+    ctx->stack_top().jump_to(inst.getSuccessor(1));
+
     queue->add_context(std::move(fork));
     return ExecutionResult::Continue;
   } else if (is_t != z3::unsat) {
     ctx->add(cond);
+    ctx->stack_top().jump_to(inst.getSuccessor(0));
     return ExecutionResult::Continue;
   } else if (is_f != z3::unsat) {
     ctx->add(!cond);
+    ctx->stack_top().jump_to(inst.getSuccessor(1));
     return ExecutionResult::Continue;
   } else {
     return ExecutionResult::Stop;
@@ -368,8 +335,9 @@ ExecutionResult Interpreter::visitCallInst(llvm::CallInst &call) {
   }
 
   DECAF_ASSERT(!call.isIndirectCall(), "Indirect functions are not implemented yet");
-  DECAF_ASSERT(!func->empty(),
-               fmt::format("Unsupported external function '{}'", func->getName().str()));
+
+  if (func->empty())
+    return visitExternFunc(call);
 
   StackFrame callee{func};
   auto &frame = ctx->stack_top();
@@ -429,12 +397,57 @@ ExecutionResult Interpreter::visitAssert(llvm::CallInst &call) {
   auto &frame = ctx->stack_top();
   auto assertion = normalize_to_bool(frame.lookup(call.getArgOperand(0), *z3));
 
+  DECAF_ASSERT(assertion.is_bool(),
+               fmt::format("Called decaf_assert with invalid type, found: {}, expected bool",
+                           assertion.get_sort().to_string()));
+
   if (ctx->check(!assertion) == z3::sat) {
     queue->add_failure(ctx->solver.get_model());
   }
   ctx->add(assertion);
 
   return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitInstruction(llvm::Instruction &inst) {
+  DECAF_ABORT(fmt::format("Instruction '{}' not implemented!", inst.getOpcodeName()));
+}
+
+/************************************************
+ * Free Functions                               *
+ ************************************************/
+z3::sort sort_for_type(z3::context &ctx, llvm::Type *type) {
+  if (type->isIntegerTy()) {
+    return ctx.bv_sort(type->getIntegerBitWidth());
+  }
+
+  std::string message;
+  llvm::raw_string_ostream os{message};
+  os << "Unsupported LLVM type: ";
+  type->print(os);
+
+  DECAF_ABORT(message);
+}
+
+void execute_symbolic(llvm::Function *function) {
+  z3::config cfg;
+
+  // We want Z3 to generate models
+  cfg.set("model", true);
+  // Automatically select and configure the solver
+  cfg.set("auto_config", true);
+
+  z3::context z3{cfg};
+  Executor exec;
+
+  exec.add_context(Context(z3, function));
+
+  while (exec.has_next()) {
+    Context ctx = exec.next_context();
+    Interpreter interp{&ctx, &exec, &z3};
+
+    interp.execute();
+  }
 }
 
 z3::expr evaluate_constant(z3::context &ctx, llvm::Constant *constant) {
@@ -466,7 +479,7 @@ z3::expr evaluate_constant(z3::context &ctx, llvm::Constant *constant) {
 z3::expr normalize_to_bool(const z3::expr &expr) {
   auto sort = expr.get_sort();
 
-  if (sort.is_int() && sort.bv_size() == 1)
+  if (sort.is_bv() && sort.bv_size() == 1)
     return expr == 1;
 
   return expr;
