@@ -6,8 +6,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 find_package(LLVM 10.0 REQUIRED)
 find_package(GTest REQUIRED)
-find_package(Z3 REQUIRED)
+find_package(Z3 4.8.7 REQUIRED)
 find_package(Boost REQUIRED)
+find_package(fmt REQUIRED)
 
 enable_testing()
 
@@ -78,14 +79,18 @@ target_include_directories(decaf PUBLIC "${LLVM_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${Z3_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${FMT_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${Boost_INCLUDE_DIRS}")
-target_link_libraries(decaf PUBLIC LLVMCore "${Z3_LIBRARIES}" fmt)
+target_link_libraries(decaf PUBLIC LLVMCore ${Z3_LIBRARIES} fmt::fmt)
 
 target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
 target_link_libraries(decaf-tests PRIVATE decaf)
 target_link_libraries(decaf-tests PRIVATE GTest::GTest)
 add_test(NAME decaf-tests COMMAND decaf-tests)
 
-set_target_properties(decaf-bin PROPERTIES OUTPUT_NAME decaf)
+if (NOT WIN32)
+  # Having the executable have the same name as the library results in
+  # the output pdb files being overwritten.
+  set_target_properties(decaf-bin PROPERTIES OUTPUT_NAME decaf)
+endif ()
 target_link_libraries(decaf-bin PRIVATE decaf)
 target_link_libraries(decaf-bin PRIVATE LLVMIRReader)
 
