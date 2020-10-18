@@ -22,6 +22,14 @@ public:
   StackFrame(llvm::Function *function);
 
   /**
+   * Change the instruction pointer to point at the start of the provided
+   * block and update the previous block accordingly.
+   *
+   * Use this when implementing a jump instruction.
+   */
+  void jump_to(llvm::BasicBlock *block);
+
+  /**
    * Insert a new value into the current stack frame. If that value
    * is already in the current stack frame then it overwrites it.
    */
@@ -139,9 +147,7 @@ public:
   // Marks an unimplemented instruction.
   //
   // TODO: Better error message?
-  ExecutionResult visitInstruction(llvm::Instruction &) {
-    DECAF_UNIMPLEMENTED();
-  }
+  ExecutionResult visitInstruction(llvm::Instruction &);
 
   // Replace this with implementation in cpp file as we go
   ExecutionResult visitAdd(llvm::BinaryOperator &op);
