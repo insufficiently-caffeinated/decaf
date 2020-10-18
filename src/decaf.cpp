@@ -385,6 +385,18 @@ ExecutionResult Interpreter::visitCallInst(llvm::CallInst &call) {
   return ExecutionResult::Continue;
 }
 
+ExecutionResult Interpreter::visitSelectInst(llvm::SelectInst &inst) {
+  auto &frame = ctx->stack_top();
+
+  auto cond = normalize_to_bool(frame.lookup(inst.getCondition(), *z3));
+  auto t_val = normalize_to_int(frame.lookup(inst.getTrueValue(), *z3));
+  auto f_val = normalize_to_int(frame.lookup(inst.getFalseValue(), *z3));
+
+  frame.insert(&inst, z3::ite(cond, t_val, f_val));
+
+  return ExecutionResult::Continue;
+}
+
 ExecutionResult Interpreter::visitExternFunc(llvm::CallInst &call) {
   auto func = call.getCalledFunction();
   auto name = func->getName();
