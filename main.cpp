@@ -20,37 +20,37 @@ cl::opt<std::string> target_method{cl::Positional};
 static ExitOnError exit_on_err;
 
 namespace {
-  struct DecafDiagnosticHandler : public DiagnosticHandler {
-    bool handleDiagnostics(const DiagnosticInfo& di) override {
-      unsigned severity = di.getSeverity();
-      switch (severity) {
-      case DS_Error:
-        WithColor::error();
-        break;
-      case DS_Warning:
-        WithColor::warning();
-        break;
-      case DS_Remark:
-        WithColor::remark();
-        break;
-      case DS_Note:
-        WithColor::note();
-        break;
-      default:
-        llvm_unreachable("DiagnosticInfo had unknown severity level");
-      }
-
-      DiagnosticPrinterRawOStream dp(errs());
-      di.print(dp);
-      errs() << '\n';
-
-      return true;
+struct DecafDiagnosticHandler : public DiagnosticHandler {
+  bool handleDiagnostics(const DiagnosticInfo &di) override {
+    unsigned severity = di.getSeverity();
+    switch (severity) {
+    case DS_Error:
+      WithColor::error();
+      break;
+    case DS_Warning:
+      WithColor::warning();
+      break;
+    case DS_Remark:
+      WithColor::remark();
+      break;
+    case DS_Note:
+      WithColor::note();
+      break;
+    default:
+      llvm_unreachable("DiagnosticInfo had unknown severity level");
     }
-  };
-}
 
-static std::unique_ptr<Module>
-loadFile(const char* argv0, const std::string& filename, LLVMContext& context) {
+    DiagnosticPrinterRawOStream dp(errs());
+    di.print(dp);
+    errs() << '\n';
+
+    return true;
+  }
+};
+} // namespace
+
+static std::unique_ptr<Module> loadFile(const char *argv0, const std::string &filename,
+                                        LLVMContext &context) {
   llvm::SMDiagnostic error;
   auto module = llvm::parseIRFile(filename, error, context);
 
@@ -62,21 +62,19 @@ loadFile(const char* argv0, const std::string& filename, LLVMContext& context) {
   return module;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
   exit_on_err.setBanner(std::string(argv[0]) + ":");
 
   LLVMContext context;
-  context.setDiagnosticHandler(
-    std::make_unique<DecafDiagnosticHandler>(), true);
+  context.setDiagnosticHandler(std::make_unique<DecafDiagnosticHandler>(), true);
 
   cl::ParseCommandLineOptions(argc, argv, "symbolic executor for LLVM IR");
 
   auto module = loadFile(argv[0], input_filename.getValue(), context);
   if (!module) {
     errs() << argv[0] << ": ";
-    WithColor::error() << " loading file '" << input_filename.getValue()
-                       << "'\n";
+    WithColor::error() << " loading file '" << input_filename.getValue() << "'\n";
     return 1;
   }
 
@@ -88,6 +86,6 @@ int main(int argc, char** argv) {
   }
 
   decaf::execute_symbolic(function);
-  
+
   return 0;
 }
