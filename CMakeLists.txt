@@ -44,7 +44,7 @@ elseif(UNIX)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       add_compile_options(-fdiagnostics-color=always)
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      add_compile_options(fcolor-diagnostics)
+      add_compile_options(-fcolor-diagnostics)
     endif()
   endif()
 endif()
@@ -53,6 +53,7 @@ add_subdirectory(tests)
 
 file(
   GLOB_RECURSE sources
+  CONFIGURE_DEPENDS
   src/*.cpp
   src/*.hpp
   src/*.h
