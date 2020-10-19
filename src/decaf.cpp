@@ -20,12 +20,6 @@ void Executor::add_context(Context &&ctx) {
   contexts.push_back(ctx);
 }
 
-void Executor::add_failure(const z3::model &model) {
-  // TODO: It might not be necessary for the prototype but we'll need
-  //       to figure what we want to do with test failures.
-  std::cout << "Found failed model! Inputs: \n" << model << std::endl;
-}
-
 Context Executor::next_context() {
   DECAF_ASSERT(has_next());
 
@@ -115,8 +109,8 @@ Context Context::fork() const {
 /************************************************
  * Interpreter                                  *
  ************************************************/
-Interpreter::Interpreter(Context *ctx, Executor *queue, z3::context *z3)
-    : ctx(ctx), queue(queue), z3(z3) {}
+Interpreter::Interpreter(Context *ctx, Executor *queue, z3::context *z3, FailureTracker *tracker)
+    : ctx(ctx), queue(queue), z3(z3), tracker(tracker) {}
 
 void Interpreter::execute() {
   ExecutionResult exec;
@@ -224,7 +218,7 @@ ExecutionResult Interpreter::visitSDiv(llvm::BinaryOperator &op) {
   auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
   if (ctx->check(rhs == 0 || !z3::bvsdiv_no_overflow(lhs, rhs)) == z3::sat) {
-    queue->add_failure(ctx->solver.get_model());
+    tracker->add_failure(*ctx, ctx->solver.get_model());
   }
   ctx->add(rhs != 0);
   ctx->add(z3::bvsdiv_no_overflow(lhs, rhs));
@@ -241,7 +235,7 @@ ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator &op) {
   auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
   if (ctx->check(rhs == 0) == z3::sat) {
-    queue->add_failure(ctx->solver.get_model());
+    tracker->add_failure(*ctx, ctx->solver.get_model());
   }
   ctx->add(rhs != 0);
 
@@ -402,7 +396,7 @@ ExecutionResult Interpreter::visitAssert(llvm::CallInst &call) {
                            assertion.get_sort().to_string()));
 
   if (ctx->check(!assertion) == z3::sat) {
-    queue->add_failure(ctx->solver.get_model());
+    tracker->add_failure(*ctx, ctx->solver.get_model());
   }
   ctx->add(assertion);
 
@@ -411,6 +405,19 @@ ExecutionResult Interpreter::visitAssert(llvm::CallInst &call) {
 
 ExecutionResult Interpreter::visitInstruction(llvm::Instruction &inst) {
   DECAF_ABORT(fmt::format("Instruction '{}' not implemented!", inst.getOpcodeName()));
+}
+
+/************************************************
+ * PrintingFailureTracker                       *
+ ************************************************/
+void PrintingFailureTracker::add_failure(const Context &, const z3::model &model) {
+  std::cout << "Found failed model! Inputs: \n" << model << std::endl;
+}
+
+FailureTracker *PrintingFailureTracker::default_instance() {
+  static PrintingFailureTracker instance;
+
+  return &instance;
 }
 
 /************************************************
@@ -429,7 +436,7 @@ z3::sort sort_for_type(z3::context &ctx, llvm::Type *type) {
   DECAF_ABORT(message);
 }
 
-void execute_symbolic(llvm::Function *function) {
+void execute_symbolic(llvm::Function *function, FailureTracker *tracker) {
   z3::config cfg;
 
   // We want Z3 to generate models
@@ -444,7 +451,7 @@ void execute_symbolic(llvm::Function *function) {
 
   while (exec.has_next()) {
     Context ctx = exec.next_context();
-    Interpreter interp{&ctx, &exec, &z3};
+    Interpreter interp{&ctx, &exec, &z3, tracker};
 
     interp.execute();
   }
