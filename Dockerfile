@@ -10,6 +10,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt update \
     && apt -y install \
         llvm-10-dev \
+        clang-10 \
         libz-dev \
         build-essential \
         gcc-9 \
