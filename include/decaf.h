@@ -103,6 +103,26 @@ public:
   void add(const z3::expr &assertion);
 };
 
+class FailureTracker {
+protected:
+  FailureTracker() = default;
+  virtual ~FailureTracker() = default;
+
+public:
+  // The current execution has encountered a failure.
+  virtual void add_failure(const Context &ctx, const z3::model &model) = 0;
+};
+
+// Default FailureTracker if none is provided
+class PrintingFailureTracker : public FailureTracker {
+public:
+  PrintingFailureTracker() = default;
+
+  void add_failure(const Context &ctx, const z3::model &model) override;
+
+  static FailureTracker *default_instance();
+};
+
 class Executor {
 private:
   std::vector<Context> contexts;
@@ -111,10 +131,6 @@ public:
   // The current context has forked and the fork needs to be added
   // to the queue.
   void add_context(Context &&ctx);
-
-  // The current context has encountered a failure that needs to be
-  // recorded.
-  void add_failure(const z3::model &model);
 
   // Get the next context to be executed.
   Context next_context();
@@ -130,10 +146,12 @@ private:
   Context *ctx;
   Executor *queue;
   z3::context *z3;
+  FailureTracker *tracker;
 
 public:
   // Add some more parameters here
-  Interpreter(Context *ctx, Executor *queue, z3::context *z3);
+  Interpreter(Context *ctx, Executor *queue, z3::context *z3,
+              FailureTracker *tracker = PrintingFailureTracker::default_instance());
 
   /**
    * Execute this interpreter's context until it finishes.
@@ -216,7 +234,8 @@ z3::sort sort_for_type(z3::context &ctx, llvm::Type *type);
  *       definitely refine the interface as we figure out the best API
  *       for this.
  */
-void execute_symbolic(llvm::Function *function);
+void execute_symbolic(llvm::Function *function,
+                      FailureTracker *tracker = PrintingFailureTracker::default_instance());
 
 /**
  * Create a Z3 expression with the same value as the given constant.
