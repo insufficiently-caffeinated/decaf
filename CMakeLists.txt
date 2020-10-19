@@ -49,6 +49,8 @@ elseif(UNIX)
   endif()
 endif()
 
+add_subdirectory(tests)
+
 file(
   GLOB_RECURSE sources
   src/*.cpp
@@ -57,17 +59,7 @@ file(
   include/*.h
 )
 
-file(
-  GLOB_RECURSE tests
-  tests/unit/*.cpp
-  tests/unit/*.h
-  tests/unit/*.hpp
-)
-
-set(fmt_sources "${sources}" "${tests}")
-
 add_library(decaf STATIC ${sources})
-add_executable(decaf-tests ${tests})
 add_executable(decaf-bin main.cpp)
 
 target_include_directories(decaf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -81,11 +73,6 @@ target_include_directories(decaf PUBLIC "${FMT_INCLUDE_DIRS}")
 target_include_directories(decaf PUBLIC "${Boost_INCLUDE_DIRS}")
 target_link_libraries(decaf PUBLIC LLVMCore ${Z3_LIBRARIES} fmt::fmt)
 
-target_include_directories(decaf-tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/tests")
-target_link_libraries(decaf-tests PRIVATE decaf)
-target_link_libraries(decaf-tests PRIVATE GTest::GTest)
-add_test(NAME decaf-tests COMMAND decaf-tests)
-
 if (NOT WIN32)
   # Having the executable have the same name as the library results in
   # the output pdb files being overwritten.
@@ -93,6 +80,16 @@ if (NOT WIN32)
 endif ()
 target_link_libraries(decaf-bin PRIVATE decaf)
 target_link_libraries(decaf-bin PRIVATE LLVMIRReader)
+
+file(
+  GLOB_RECURSE fmt_sources
+  *.c
+  *.cpp
+  *.h
+  *.hpp
+)
+
+set(fmt_sources "${fmt_sources}")
 
 add_custom_target(format
   COMMAND clang-format -i ${fmt_sources}
