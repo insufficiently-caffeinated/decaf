@@ -251,7 +251,7 @@ ExecutionResult Interpreter::visitSRem(llvm::BinaryOperator &op) {
   auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
   if (ctx->check(rhs == 0 || !z3::bvsdiv_no_overflow(lhs, rhs)) == z3::sat) {
-    queue->add_failure(ctx->solver.get_model());
+    tracker->add_failure(*ctx, ctx->solver.get_model());
   }
   ctx->add(rhs != 0);
   ctx->add(z3::bvsdiv_no_overflow(lhs, rhs));
@@ -268,7 +268,7 @@ ExecutionResult Interpreter::visitURem(llvm::BinaryOperator &op) {
   auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
   if (ctx->check(rhs == 0) == z3::sat) {
-    queue->add_failure(ctx->solver.get_model());
+    tracker->add_failure(*ctx, ctx->solver.get_model());
   }
   ctx->add(rhs != 0);
 
