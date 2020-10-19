@@ -173,12 +173,8 @@ public:
   ExecutionResult visitMul(llvm::BinaryOperator &op);
   ExecutionResult visitUDiv(llvm::BinaryOperator &op);
   ExecutionResult visitSDiv(llvm::BinaryOperator &op);
-  ExecutionResult visitURem(llvm::BinaryOperator &op) {
-    DECAF_UNIMPLEMENTED();
-  }
-  ExecutionResult visitSRem(llvm::BinaryOperator &op) {
-    DECAF_UNIMPLEMENTED();
-  }
+  ExecutionResult visitURem(llvm::BinaryOperator &op);
+  ExecutionResult visitSRem(llvm::BinaryOperator &op);
 
   ExecutionResult visitICmpInst(llvm::ICmpInst &icmp);
 

@@ -239,7 +239,40 @@ ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator &op) {
   }
   ctx->add(rhs != 0);
 
-  frame.insert(&op, lhs / rhs);
+  frame.insert(&op, z3::udiv(lhs, rhs));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitSRem(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  if (ctx->check(rhs == 0 || !z3::bvsdiv_no_overflow(lhs, rhs)) == z3::sat) {
+    tracker->add_failure(*ctx, ctx->solver.get_model());
+  }
+  ctx->add(rhs != 0);
+  ctx->add(z3::bvsdiv_no_overflow(lhs, rhs));
+
+  frame.insert(&op, lhs % rhs);
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitURem(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  if (ctx->check(rhs == 0) == z3::sat) {
+    tracker->add_failure(*ctx, ctx->solver.get_model());
+  }
+  ctx->add(rhs != 0);
+
+  frame.insert(&op, z3::urem(lhs, rhs));
 
   return ExecutionResult::Continue;
 }
