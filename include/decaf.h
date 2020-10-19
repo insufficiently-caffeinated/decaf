@@ -173,7 +173,25 @@ public:
 private:
   ExecutionResult visitExternFunc(llvm::CallInst &inst);
 
+  /**
+   * Implements decaf_assume. Docs follow:
+   *
+   * Assume that a condition is true.
+   *
+   * This will silently remove any executions in which the condition
+   * could evaluate to false.
+   */
   ExecutionResult visitAssume(llvm::CallInst &inst);
+
+  /**
+   * Implements decaf_assert. Docs follow:
+   *
+   * Assert that the condition is true.
+   *
+   * In cases where the symbolic executor determines that the
+   * condition could be false, it will produce a test case with
+   * concrete inputs which reproduce the failure.
+   */
   ExecutionResult visitAssert(llvm::CallInst &inst);
 };
 
