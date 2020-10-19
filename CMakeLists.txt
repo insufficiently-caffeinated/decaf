@@ -59,9 +59,9 @@ file(
 
 file(
   GLOB_RECURSE tests
-  tests/*.cpp
-  tests/*.h
-  tests/*.hpp
+  tests/unit/*.cpp
+  tests/unit/*.h
+  tests/unit/*.hpp
 )
 
 set(fmt_sources "${sources}" "${tests}")
