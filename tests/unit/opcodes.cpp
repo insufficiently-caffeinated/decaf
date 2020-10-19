@@ -186,7 +186,7 @@ TEST(opcodes, basic_udiv_test) {
 
   auto func = empty_function(llvm);
   auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 17));
-  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -9));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 9));
 
   Context ctx{z3, func.get()};
   Interpreter interp{&ctx, nullptr, &z3};
@@ -197,7 +197,7 @@ TEST(opcodes, basic_udiv_test) {
   interp.visitUDiv(*div1);
 
   auto expr = ctx.stack_top().lookup(div1, z3);
-  ctx.solver.add(expr == -1);
+  ctx.solver.add(expr == 17 / 9);
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
@@ -352,8 +352,26 @@ TEST(opcodes, srem_test_overflow) {
 
   interp.visitSRem(*div1);
 
-  // For now there should be a print msg in cout that we tried to divide by 0.
-  // TODO: Change this test once `Executor::add_failure` is updated.
   auto expr0 = ctx.stack_top().lookup(div1, z3);
   EXPECT_EQ(ctx.check(expr0 == 2147483647), z3::unsat);
+}
+
+TEST(opcodes, srem_test_neg) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 8));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, -3));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto div1 = llvm::BinaryOperator::CreateSRem(val1, val2, "div1", &bb);
+
+  interp.visitSRem(*div1);
+
+  auto expr0 = ctx.stack_top().lookup(div1, z3);
+  EXPECT_EQ(ctx.check(expr0 == -1), z3::sat);
 }

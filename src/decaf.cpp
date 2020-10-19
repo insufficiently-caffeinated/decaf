@@ -239,7 +239,7 @@ ExecutionResult Interpreter::visitUDiv(llvm::BinaryOperator &op) {
   }
   ctx->add(rhs != 0);
 
-  frame.insert(&op, lhs / rhs);
+  frame.insert(&op, z3::udiv(lhs, rhs));
 
   return ExecutionResult::Continue;
 }
@@ -272,7 +272,7 @@ ExecutionResult Interpreter::visitURem(llvm::BinaryOperator &op) {
   }
   ctx->add(rhs != 0);
 
-  frame.insert(&op, lhs % rhs);
+  frame.insert(&op, z3::urem(lhs, rhs));
 
   return ExecutionResult::Continue;
 }
