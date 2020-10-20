@@ -479,7 +479,7 @@ ExecutionResult Interpreter::visitInstruction(llvm::Instruction &inst) {
 /************************************************
  * PrintingFailureTracker                       *
  ************************************************/
-void PrintingFailureTracker::add_failure(const Context &, const z3::model &model) {
+void PrintingFailureTracker::add_failure(Context &, const z3::model &model) {
   std::cout << "Found failed model! Inputs: \n" << model << std::endl;
 }
 
