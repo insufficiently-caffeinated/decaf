@@ -21,9 +21,17 @@ foreach(test ${c_tests})
   list(APPEND test_files "${TEST_OUTPUT}")
 endforeach()
 
-# TODO: Add support for LLVM IR (.ll) test case files. They'll likely be
-#       needed for more tests later on. While were at it, we should
-#       probably add support for C++-based test cases.
+foreach(test ${ir_tests})
+  file(RELATIVE_PATH test_file "${CMAKE_CURRENT_SOURCE_DIR}" "${test}")
+  set(TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${test_file}.ll")
+
+  add_test(
+    NAME "run-pass/${test_file}"
+    COMMAND test-pass "${test}" test
+  )
+endforeach()
+
+# TODO: Add support for C++ test cases.
 
 # Custom commands don't run by default. We need a target to force them
 # to run.
