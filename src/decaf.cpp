@@ -277,6 +277,39 @@ ExecutionResult Interpreter::visitURem(llvm::BinaryOperator &op) {
   return ExecutionResult::Continue;
 }
 
+ExecutionResult Interpreter::visitShl(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, z3::shl(lhs, rhs));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitAShr(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, z3::ashr(lhs, rhs));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitLShr(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, z3::lshr(lhs, rhs));
+
+  return ExecutionResult::Continue;
+}
+
 ExecutionResult Interpreter::visitBranchInst(llvm::BranchInst &inst) {
   if (!inst.isConditional()) {
     ctx->stack_top().jump_to(inst.getSuccessor(0));

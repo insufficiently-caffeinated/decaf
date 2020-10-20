@@ -63,7 +63,7 @@ public:
   Context(z3::context &z3, llvm::Function *function);
 
   /**
-   * Create a new context that is independant from this
+   * Create a new context that is independent from this
    * one but has the same state.
    */
   Context fork() const;
@@ -90,7 +90,7 @@ public:
    */
   z3::check_result check(const z3::expr &expr);
   /**
-   * Check whether the current set of assertions is satisifiable.
+   * Check whether the current set of assertions is satisfiable.
    *
    * If this returns sat then you can extract a model by calling
    * `solver.model()`.
@@ -175,6 +175,9 @@ public:
   ExecutionResult visitSDiv(llvm::BinaryOperator &op);
   ExecutionResult visitURem(llvm::BinaryOperator &op);
   ExecutionResult visitSRem(llvm::BinaryOperator &op);
+  ExecutionResult visitShl(llvm::BinaryOperator &op);
+  ExecutionResult visitLShr(llvm::BinaryOperator &op);
+  ExecutionResult visitAShr(llvm::BinaryOperator &op);
 
   ExecutionResult visitICmpInst(llvm::ICmpInst &icmp);
 

@@ -375,3 +375,153 @@ TEST(opcodes, srem_test_neg) {
   auto expr0 = ctx.stack_top().lookup(div1, z3);
   EXPECT_EQ(ctx.check(expr0 == -1), z3::sat);
 }
+
+TEST(opcodes, basic_shl_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0x8b));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 13));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 3));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto shl1 = llvm::BinaryOperator::CreateShl(val, bits1, "shl1", &bb);
+  auto shl2 = llvm::BinaryOperator::CreateShl(shl1, bits2, "shl2", &bb);
+
+  interp.visitShl(*shl1);
+  interp.visitShl(*shl2);
+
+  auto expr = ctx.stack_top().lookup(shl2, z3);
+  ctx.solver.add(expr == 0x8b0000);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, overflow_shl_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0xfedcba98));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 2));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 6));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto shl1 = llvm::BinaryOperator::CreateShl(val, bits1, "shl1", &bb);
+  auto shl2 = llvm::BinaryOperator::CreateShl(shl1, bits2, "shl2", &bb);
+
+  interp.visitShl(*shl1);
+  interp.visitShl(*shl2);
+
+  auto expr = ctx.stack_top().lookup(shl2, z3);
+  ctx.solver.add(expr == (int)0xdcba9800);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, positive_lshr_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0x01234567));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 2));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 6));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto lshr1 = llvm::BinaryOperator::CreateLShr(val, bits1, "lshr1", &bb);
+  auto lshr2 = llvm::BinaryOperator::CreateLShr(lshr1, bits2, "lshr2", &bb);
+
+  interp.visitLShr(*lshr1);
+  interp.visitLShr(*lshr2);
+
+  auto expr = ctx.stack_top().lookup(lshr2, z3);
+  ctx.solver.add(expr == 0x00012345);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, negative_lshr_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0xfedcba98));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 2));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 6));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto lshr1 = llvm::BinaryOperator::CreateLShr(val, bits1, "lshr1", &bb);
+  auto lshr2 = llvm::BinaryOperator::CreateLShr(lshr1, bits2, "lshr2", &bb);
+
+  interp.visitLShr(*lshr1);
+  interp.visitLShr(*lshr2);
+
+  auto expr = ctx.stack_top().lookup(lshr2, z3);
+  ctx.solver.add(expr == 0x00fedcba);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, positive_ashr_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0x01234567));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 2));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 6));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto ashr1 = llvm::BinaryOperator::CreateAShr(val, bits1, "ashr1", &bb);
+  auto ashr2 = llvm::BinaryOperator::CreateAShr(ashr1, bits2, "ashr2", &bb);
+
+  interp.visitAShr(*ashr1);
+  interp.visitAShr(*ashr2);
+
+  auto expr = ctx.stack_top().lookup(ashr2, z3);
+  ctx.solver.add(expr == 0x00012345);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, negative_ashr_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0xfedcba98));
+  auto bits1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 2));
+  auto bits2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 6));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto ashr1 = llvm::BinaryOperator::CreateAShr(val, bits1, "ashr1", &bb);
+  auto ashr2 = llvm::BinaryOperator::CreateAShr(ashr1, bits2, "ashr2", &bb);
+
+  interp.visitAShr(*ashr1);
+  interp.visitAShr(*ashr2);
+
+  auto expr = ctx.stack_top().lookup(ashr2, z3);
+  ctx.solver.add(expr == (int)0xfffedcba);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}

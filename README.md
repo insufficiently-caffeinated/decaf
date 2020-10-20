@@ -1,6 +1,7 @@
 # Decaf - Prototype Symbolic Execution Engine
 
 ## Getting Dependencies
+
 You'll need to set the `CMAKE_TOOLCHAIN_FILE` variable according to your
 vscode install directory. Once that's done you can just run cmake as you
 would normally to generate your build system.
@@ -26,9 +27,10 @@ Once that's done you shouldn't have to worry about it anymore.
   - `make`
   - `make install`
 - Run cmake and make
-  - Find the path to llvm with `brew info llvm`, it should look something like `/usr/local/Cellar/llvm/10.0.1_1`
-  - Run cmake, replacing `-DLLVM_DIR=...` with the path to llvm
-    - `mkdir build`
-    - `cd build`
-    - `cmake .. -DLLVM_DIR=/usr/local/Cellar/llvm/10.0.1_1/lib/cmake/llvm/ -DCMAKE_C_COMPILER=/usr/bin/llvm-gcc -DCMAKE_CXX_COMPILER=/usr/bin/llvm-g++ -DCMAKE_CXX_FLAGS=-D_GNU_SOURCE=1`
-    - `make`
+  - Navigate to the project's root directory
+  - `mkdir build`
+  - `cd build`
+  - `LLVM_DIR=$(brew --prefix llvm)`
+  - `cmake .. "-DLLVM_DIR=${LLVM_DIR}/lib/cmake/llvm/" "-DCMAKE_C_COMPILER=${LLVM_DIR}/bin/clang" "-DCMAKE_CXX_COMPILER=${LLVM_DIR}/bin/clang++"`
+  - Add the output of `brew --prefix llvm` to your `PATH`
+  - `make`
