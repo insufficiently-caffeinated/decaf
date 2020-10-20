@@ -25,8 +25,11 @@ class CountingFailureTracker : public FailureTracker {
 public:
   uint64_t count = 0;
 
-  void add_failure(const Context &, const z3::model &model) override {
+  void add_failure(Context &ctx, const z3::model &model) override {
     count += 1;
+
+    std::cout << "Found failure:\n" << model << std::endl;
+    std::cout << ctx.solver.to_smt2();
   }
 };
 

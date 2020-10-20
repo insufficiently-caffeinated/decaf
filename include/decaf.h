@@ -110,7 +110,7 @@ protected:
 
 public:
   // The current execution has encountered a failure.
-  virtual void add_failure(const Context &ctx, const z3::model &model) = 0;
+  virtual void add_failure(Context &ctx, const z3::model &model) = 0;
 };
 
 // Default FailureTracker if none is provided
@@ -118,7 +118,7 @@ class PrintingFailureTracker : public FailureTracker {
 public:
   PrintingFailureTracker() = default;
 
-  void add_failure(const Context &ctx, const z3::model &model) override;
+  void add_failure(Context &ctx, const z3::model &model) override;
 
   static FailureTracker *default_instance();
 };
