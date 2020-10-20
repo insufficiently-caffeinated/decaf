@@ -61,7 +61,10 @@ z3::expr StackFrame::lookup(llvm::Value *value, z3::context &ctx) const {
 /************************************************
  * Context                                      *
  ************************************************/
-Context::Context(z3::context &z3, llvm::Function *function) : solver(z3) {
+
+Context::Context(z3::context &z3, llvm::Function *function) : 
+  solver(z3::tactic(z3, "default").mk_solver())
+{
   stack.emplace_back(function);
   StackFrame &frame = stack_top();
 
@@ -97,7 +100,7 @@ void Context::add(const z3::expr &assertion) {
 }
 
 Context Context::fork() const {
-  z3::solver new_solver{solver.ctx()};
+  z3::solver new_solver = z3::tactic(solver.ctx(), "default").mk_solver();
 
   for (const auto &assertion : solver.assertions()) {
     new_solver.add(assertion);
