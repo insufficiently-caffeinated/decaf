@@ -421,7 +421,7 @@ TEST(opcodes, overflow_shl_test) {
   interp.visitShl(*shl2);
 
   auto expr = ctx.stack_top().lookup(shl2, z3);
-  ctx.solver.add(expr == (int)0xdcba9800);
+  ctx.solver.add(expr == (int32_t)0xdcba9800);
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
@@ -521,7 +521,7 @@ TEST(opcodes, negative_ashr_test) {
   interp.visitAShr(*ashr2);
 
   auto expr = ctx.stack_top().lookup(ashr2, z3);
-  ctx.solver.add(expr == (int)0xfffedcba);
+  ctx.solver.add(expr == (int32_t)0xfffedcba);
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
