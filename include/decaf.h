@@ -179,6 +179,7 @@ public:
   ExecutionResult visitLShr(llvm::BinaryOperator &op);
   ExecutionResult visitAShr(llvm::BinaryOperator &op);
 
+  ExecutionResult visitTrunc(llvm::TruncInst &trunc);
   ExecutionResult visitICmpInst(llvm::ICmpInst &icmp);
 
   ExecutionResult visitPHINode(llvm::PHINode &node);

@@ -62,9 +62,8 @@ z3::expr StackFrame::lookup(llvm::Value *value, z3::context &ctx) const {
  * Context                                      *
  ************************************************/
 
-Context::Context(z3::context &z3, llvm::Function *function) : 
-  solver(z3::tactic(z3, "default").mk_solver())
-{
+Context::Context(z3::context &z3, llvm::Function *function)
+    : solver(z3::tactic(z3, "default").mk_solver()) {
   stack.emplace_back(function);
   StackFrame &frame = stack_top();
 
@@ -309,6 +308,20 @@ ExecutionResult Interpreter::visitLShr(llvm::BinaryOperator &op) {
   auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
 
   frame.insert(&op, z3::lshr(lhs, rhs));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitTrunc(llvm::TruncInst &trunc) {
+  auto &frame = ctx->stack_top();
+
+  auto src = normalize_to_int(frame.lookup(trunc.getOperand(0), *z3));
+  auto dst_ty = trunc.getDestTy();
+
+  DECAF_ASSERT(dst_ty->isIntegerTy());
+  DECAF_ASSERT(dst_ty->getIntegerBitWidth() <= src.get_sort().bv_size());
+
+  frame.insert(&trunc, src.extract(dst_ty->getIntegerBitWidth() - 1, 0));
 
   return ExecutionResult::Continue;
 }
