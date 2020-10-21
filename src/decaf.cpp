@@ -312,6 +312,49 @@ ExecutionResult Interpreter::visitLShr(llvm::BinaryOperator &op) {
   return ExecutionResult::Continue;
 }
 
+ExecutionResult Interpreter::visitAnd(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, lhs & rhs);
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitOr(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, lhs | rhs);
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitXor(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto lhs = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+  auto rhs = normalize_to_int(frame.lookup(op.getOperand(1), *z3));
+
+  frame.insert(&op, lhs ^ rhs);
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitNot(llvm::BinaryOperator &op) {
+  StackFrame &frame = ctx->stack_top();
+
+  auto expr = normalize_to_int(frame.lookup(op.getOperand(0), *z3));
+
+  frame.insert(&op, ~expr);
+
+  return ExecutionResult::Continue;
+}
+
 ExecutionResult Interpreter::visitTrunc(llvm::TruncInst &trunc) {
   auto &frame = ctx->stack_top();
 

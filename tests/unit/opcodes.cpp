@@ -525,3 +525,99 @@ TEST(opcodes, negative_ashr_test) {
 
   EXPECT_EQ(ctx.solver.check(), z3::sat);
 }
+
+TEST(opcodes, basic_and_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1010));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1011));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b0010));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto and1 = llvm::BinaryOperator::CreateAnd(val1, val2, "and1", &bb);
+  auto and2 = llvm::BinaryOperator::CreateAnd(and1, val3, "and2", &bb);
+
+  interp.visitAnd(*and1);
+  interp.visitAnd(*and2);
+
+  auto expr = ctx.stack_top().lookup(and2, z3);
+  ctx.solver.add(expr == (int32_t)(0b1010 & 0b1011 & 0b0010));
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, basic_or_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1010));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1011));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b0010));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto or1 = llvm::BinaryOperator::CreateOr(val1, val2, "or1", &bb);
+  auto or2 = llvm::BinaryOperator::CreateOr(or1, val3, "or2", &bb);
+
+  interp.visitOr(*or1);
+  interp.visitOr(*or2);
+
+  auto expr = ctx.stack_top().lookup(or2, z3);
+  ctx.solver.add(expr == (int32_t)(0b1010 | 0b1011 | 0b0010));
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, basic_xor_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val1 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1010));
+  auto val2 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b1011));
+  auto val3 = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0b0010));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto xor1 = llvm::BinaryOperator::CreateXor(val1, val2, "xor1", &bb);
+  auto xor2 = llvm::BinaryOperator::CreateXor(xor1, val3, "xor2", &bb);
+
+  interp.visitXor(*xor1);
+  interp.visitXor(*xor2);
+
+  auto expr = ctx.stack_top().lookup(xor2, z3);
+  ctx.solver.add(expr == (int32_t)(0b1010 ^ 0b1011 ^ 0b0010));
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
+
+TEST(opcodes, basic_not_test) {
+  LLVMContext llvm;
+  z3::context z3 = default_context();
+
+  auto func = empty_function(llvm);
+  auto val = ConstantInt::get(IntegerType::getInt32Ty(llvm), APInt(32, 0x0123fedc));
+
+  Context ctx{z3, func.get()};
+  Interpreter interp{&ctx, nullptr, &z3};
+
+  auto &bb = func->getEntryBlock();
+  auto not_ = llvm::BinaryOperator::CreateNot(val, "not", &bb);
+
+  interp.visitNot(*not_);
+
+  auto expr = ctx.stack_top().lookup(not_, z3);
+  ctx.solver.add(expr == ~0x0123fedc);
+
+  EXPECT_EQ(ctx.solver.check(), z3::sat);
+}
