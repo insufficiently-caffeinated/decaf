@@ -186,6 +186,9 @@ public:
   ExecutionResult visitTrunc(llvm::TruncInst &trunc);
   ExecutionResult visitICmpInst(llvm::ICmpInst &icmp);
 
+  ExecutionResult visitSExtInst(llvm::SExtInst &sext);
+  ExecutionResult visitZExtInst(llvm::ZExtInst &zext);
+
   ExecutionResult visitPHINode(llvm::PHINode &node);
   ExecutionResult visitBranchInst(llvm::BranchInst &inst);
   ExecutionResult visitReturnInst(llvm::ReturnInst &inst);

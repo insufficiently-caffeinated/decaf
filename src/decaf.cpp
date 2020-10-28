@@ -484,6 +484,36 @@ ExecutionResult Interpreter::visitSelectInst(llvm::SelectInst &inst) {
   return ExecutionResult::Continue;
 }
 
+ExecutionResult Interpreter::visitSExtInst(llvm::SExtInst &sext) {
+  auto &frame = ctx->stack_top();
+
+  auto src = normalize_to_int(frame.lookup(sext.getOperand(0), *z3));
+  auto dst_ty = sext.getDestTy();
+
+  DECAF_ASSERT(dst_ty->isIntegerTy());
+  DECAF_ASSERT(dst_ty->getIntegerBitWidth() > src.get_sort().bv_size());
+
+  auto size_difference = dst_ty->getIntegerBitWidth() - src.get_sort().bv_size();
+  frame.insert(&sext, z3::sext(src, size_difference));
+
+  return ExecutionResult::Continue;
+}
+
+ExecutionResult Interpreter::visitZExtInst(llvm::ZExtInst &zext) {
+  auto &frame = ctx->stack_top();
+
+  auto src = normalize_to_int(frame.lookup(zext.getOperand(0), *z3));
+  auto dst_ty = zext.getDestTy();
+
+  DECAF_ASSERT(dst_ty->isIntegerTy());
+  DECAF_ASSERT(dst_ty->getIntegerBitWidth() > src.get_sort().bv_size());
+
+  auto size_difference = dst_ty->getIntegerBitWidth() - src.get_sort().bv_size();
+  frame.insert(&zext, z3::zext(src, size_difference));
+
+  return ExecutionResult::Continue;
+}
+
 ExecutionResult Interpreter::visitExternFunc(llvm::CallInst &call) {
   auto func = call.getCalledFunction();
   auto name = func->getName();
